@@ -6,20 +6,25 @@ const bucket = storage.bucket(functions.config().bucket.name)
 admin.initializeApp()
 const db = admin.firestore()
 
-const getDownloadUrls = paths => {
-  return Promise.all(paths.map(path => getDownloadUrl(path)))
+const getDownloadUrls = publicRefs => {
+  return Promise.all(publicRefs.map(publicPath => getDownloadUrl(publicPath)))
 }
 
-const getDownloadUrl = path => {
+const getDownloadUrl = publicRef => {
   return new Promise(async (resolve, reject) => {
-    const file = bucket.file(path)
+    const singleId = publicRef.id
+    const privateDoc = await publicRef.parent.parent
+      .collection('private')
+      .doc(singleId)
+      .get()
+    const file = bucket.file(privateDoc.data().data)
     const data = await file.exists()
     if (!data[0]) reject('The file does not exist.')
     const config = {
       action: 'read',
       expires: Date.now() + 1000 * 60 * 60 * 24, //now + 1day
     }
-    resolve(file.getSignedUrl(config))
+    resolve(await file.getSignedUrl(config))
   })
 }
 
@@ -35,20 +40,17 @@ const downloadProcess = async snRef => {
   } else {
     // ダウンロードURL発行処理
     let downloadUrl = ''
-    if (snData.type === 'single') {
-      const singleId = snData.contents.id
-      const doc = await snData.contents.parent.parent
-        .collection('private')
-        .doc(singleId)
-        .get()
-
-      downloadUrl = await getDownloadUrl(doc.data().data)
-    } else if (snData.type === 'package') {
-      snData.contents.get().then(doc => {
-        console.log(doc.data())
-      })
-      // @TODO: make urls to every single
+    switch (snData.type) {
+      case 'single':
+        downloadUrl = await getDownloadUrl(snData.contents)
+        break
+      case 'package':
+        const packageDoc = await snData.contents.get()
+        downloadUrl = await getDownloadUrls(packageDoc.data().contents)
+        break
     }
+
+    const result = { downloadUrl, type: snData.type }
 
     // ダウンロード残り回数を減らす
     try {
@@ -57,9 +59,9 @@ const downloadProcess = async snRef => {
         downloadsCount: snData.downloadsCount + 1,
         updatedDate: admin.firestore.FieldValue.serverTimestamp(),
       })
-      return Promise.resolve(downloadUrl)
-    } catch (err) {
-      return Promise.reject(err)
+      return Promise.resolve(result)
+    } catch (error) {
+      return Promise.reject(error)
     }
   }
 }
@@ -83,7 +85,7 @@ exports.download = functions.https.onRequest((req, res) => {
       return res.status(200).json({ result })
     })
     .catch(err => {
-      console.log('Transaction failure:', err)
-      return res.status(400).json({ err })
+      console.log('Transaction failure:', error)
+      return res.status(400).json({ error })
     })
 })
