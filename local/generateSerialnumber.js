@@ -18,9 +18,6 @@ const downloadsRemaining = 3 //ダウンロード可能回数
 const contents = db.doc('/single/info/public/I55IZXrYMcDBC0TDSFCP') //'single' か 'package'のRef
 // ---------- SETTING ----------
 
-const serialnumberRef = db.collection('serialnumber')
-const batch = db.batch()
-
 const generateSerialnumber = () => {
   const max = Math.pow(10, digit)
 
@@ -32,10 +29,25 @@ const generateSerialnumber = () => {
     createdDate: admin.firestore.FieldValue.serverTimestamp(),
     updatedDate: admin.firestore.FieldValue.serverTimestamp(),
   }
+
   for (let i = 0; i < quantity; i++) {
-    const val = zeroPadding(Math.floor(Math.random() * max), digit)
-    batch.set(serialnumberRef.doc(val), values)
+    let newSerialnumber
+    do {
+      newSerialnumber = zeroPadding(Math.floor(Math.random() * max), digit)
+    } while (existingSerialnumbers.includes(newSerialnumber))
+    existingSerialnumbers.push(newSerialnumber)
+    batch.set(serialnumberRef.doc(newSerialnumber), values)
+
+    // 500件ごとにコミット
+    if ((i + 1) % 500 === 0) {
+      commit()
+      batch = db.batch()
+    }
   }
+  commit()
+}
+
+const commit = () => {
   batch
     .commit()
     .then(info => {
@@ -50,4 +62,17 @@ const zeroPadding = (num, len) => {
   return (Array(len).join('0') + num).slice(-len)
 }
 
-generateSerialnumber()
+// ========================================
+
+const serialnumberRef = db.collection('serialnumber')
+let batch = db.batch()
+
+// 既存のシリアルナンバーを取得
+const existingSerialnumbers = []
+serialnumberRef.get().then(snapshot => {
+  snapshot.forEach(doc => {
+    existingSerialnumbers.push(doc.id)
+  })
+  console.log('existing serialnumbers size:  ', snapshot.size)
+  generateSerialnumber()
+})
