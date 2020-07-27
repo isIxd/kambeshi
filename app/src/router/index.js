@@ -1,14 +1,14 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
+import EnterSerialnumber from '../views/EnterSerialnumber.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: Home,
+    name: 'EnterSerialnumber',
+    component: EnterSerialnumber,
   },
   {
     path: '/about',
