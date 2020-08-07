@@ -22,8 +22,10 @@ export default new Vuex.Store({
       state.isSerialnumberValid = data.downloadsRemaining > 0
       state.type = data.type
     },
-    setContents: (state, type, data) => {
-      state[type] = data
+    setContents: (state, payload) => {
+      Object.keys(state[payload.type]).map(key => {
+        Vue.set(state[payload.type], key, payload.data[key])
+      })
     },
   },
   actions: {
@@ -33,26 +35,26 @@ export default new Vuex.Store({
     validateSerialnumber: async ({ state, commit }) => {
       validateSerialnumber(state.serialnumber)
         .then(data => {
-          commit('setSerialnumber', data)
+          commit('setTargetData', data)
           switch (data.type) {
             case 'package':
               getPackageData(data.contents)
                 .then(packageData => {
-                  commit('setContents', 'package', packageData)
+                  commit('setContents', { type: 'package', data: packageData })
                 })
                 .catch(err => console.log(err))
               break
             case 'single':
               getSingleData(data.contents)
                 .then(singleData => {
-                  commit('setContents', 'single', singleData)
+                  commit('setContents', { type: 'single', data: singleData })
                 })
                 .catch(err => console.log(err))
               break
           }
         })
         .catch(err => {
-          console.log(err)
+          console.error(err)
         })
     },
   },

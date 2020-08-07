@@ -14,7 +14,8 @@ const validateSerialnumber = async serialnumber => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     try {
-      const data = await db.doc(`serialnumber/${serialnumber}`).data()
+      const snapshot = await db.doc(`serialnumber/${serialnumber}`).get()
+      const data = snapshot.data()
       if (data) {
         resolve(data)
       } else {
@@ -27,13 +28,15 @@ const validateSerialnumber = async serialnumber => {
 }
 
 const getPackageData = async packageRef => {
-  const data = await packageRef.get().data()
+  const snapshot = await packageRef.get()
+  const data = snapshot.data()
   const singles = await Promise.all(data.contents.map(singleRef => getSingleData(singleRef)))
   return { ...data, contents: singles }
 }
 
 const getSingleData = async singleRef => {
-  return await singleRef.get().data()
+  const snapshot = await singleRef.get()
+  return await snapshot.data()
 }
 
 export { firebase, db, validateSerialnumber, getPackageData, getSingleData }
