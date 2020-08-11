@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar app color="primary" dark>
+    <v-app-bar app color="primary" dark fixed>
       <div class="d-flex align-center">
         <v-img
           alt="Vuetify Logo"
@@ -46,3 +46,9 @@ export default {
   }),
 }
 </script>
+
+<style lang="sass">
+body
+  height: 100vh
+   overflow: hidden
+</style>

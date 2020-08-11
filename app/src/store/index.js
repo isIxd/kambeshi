@@ -59,4 +59,7 @@ export default new Vuex.Store({
     },
   },
   modules: {},
+  getters: {
+    getPackage: state => state.package,
+  },
 })

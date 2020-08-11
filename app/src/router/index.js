@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import EnterSerialnumber from '../views/EnterSerialnumber.vue'
+import Download from '../views/Download.vue'
 
 Vue.use(VueRouter)
 
@@ -9,6 +10,11 @@ const routes = [
     path: '/',
     name: 'EnterSerialnumber',
     component: EnterSerialnumber,
+  },
+  {
+    path: '/download',
+    name: 'Download',
+    component: Download,
   },
   {
     path: '/about',

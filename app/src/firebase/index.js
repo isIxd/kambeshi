@@ -31,12 +31,15 @@ const getPackageData = async packageRef => {
   const snapshot = await packageRef.get()
   const data = snapshot.data()
   const singles = await Promise.all(data.contents.map(singleRef => getSingleData(singleRef)))
-  return { ...data, contents: singles }
+  return { ...data, contents: singles, id: packageRef.id }
 }
 
 const getSingleData = async singleRef => {
   const snapshot = await singleRef.get()
-  return await snapshot.data()
+  return await {
+    ...snapshot.data(),
+    id: singleRef.id,
+  }
 }
 
 export { firebase, db, validateSerialnumber, getPackageData, getSingleData }
