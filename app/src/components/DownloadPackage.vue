@@ -1,24 +1,25 @@
 <template>
-  <div id="page" ref="pageContainer" :class="pageClass">
+  <div class="pageContainer" ref="pageContainer" :class="pageClass">
     <v-row>
       <v-col md="4" cols="12">
         <v-row id="artwork" justify="center" ref="artwork" no-gutters class="mb-6"
           ><v-col cols="10" sm="6" md="12"><v-img contain :src="pack.artwork"></v-img></v-col
         ></v-row>
         <ContentsInfomation
-          id="info"
-          ref="info"
-          refer="info"
-          :style="infoStyleObj"
+          ref="contentsInfo"
+          refer="contentsInfo"
+          class="contentsInfo"
+          :class="contentsInfoClass"
+          :style="contentsInfoStyleObj"
           :name="pack.name"
           :artist="pack.artist"
           :releaseDate="releaseDate"
-          :size="infoSize"
+          :size="contentsInfoSize"
         >
           <v-row
-            id="downloadBtn"
             ref="downloadBtn"
             justify="end"
+            class="download"
             :class="downloadClass"
             :style="downloadBtnStyle"
           >
@@ -77,14 +78,14 @@ export default {
   },
   data: function() {
     return {
-      infoStyleObj: {},
+      contentsInfoStyleObj: {},
       listHeight: '150px',
       downloadBtnStyle: {
         background: '',
         bottom: '0px',
         paddingBottom: '12px',
       },
-      infoSize: 2,
+      contentsInfoSize: 2,
       enableScroll: true,
     }
   },
@@ -94,10 +95,6 @@ export default {
       () => this.$store.getters.getPackage,
       pack => console.log(pack)
     )
-
-    // for dev
-    this.$store.dispatch('setSerialnumber', '44438208')
-    this.$store.dispatch('validateSerialnumber')
   },
   mounted: function() {
     const interval = setInterval(() => {
@@ -106,7 +103,7 @@ export default {
         clearInterval(interval)
         this.onResize()
       }
-    }, 10)
+    }, 100)
     this.setDownloadBtnBackground()
   },
   methods: {
@@ -116,11 +113,11 @@ export default {
       try {
         const listPos = this.getAbsolutePosition(this.$refs.list.childNodes[0])
         const downloadBtnPos = this.getAbsolutePosition(this.$refs.downloadBtn)
-        const infoPos = this.getAbsolutePosition(this.$refs.info.$el)
+        const contentsInfoPos = this.getAbsolutePosition(this.$refs.contentsInfo.$el)
         const artworkPos = this.getAbsolutePosition(this.$refs.artwork)
         const listHeightThreshold = 150
 
-        if (artworkPos.bottom - artworkPos.top <= 0)
+        if (artworkPos.heght == 0)
           setTimeout(() => {
             this.onResize()
           }, 100)
@@ -133,7 +130,7 @@ export default {
             result = window.innerHeight - listPos.top - 36 + 'px'
             break
           default:
-            result = infoPos.top - listPos.top - 36 + 'px'
+            result = contentsInfoPos.top - listPos.top - 36 + 'px'
             break
         }
 
@@ -149,43 +146,42 @@ export default {
       } catch (e) {
         // console.log(e)
       }
-      // console.log(result)
       this.listHeight = result
 
-      // ===== info の処理 =====
+      // ===== contentsInfo の処理 =====
       try {
-        const listElm = this.$refs.list
-        const pageContainer = this.$refs.pageContainer
-        const artworkElm = this.$refs.artwork
+        const listPos = this.getAbsolutePosition(this.$refs.list.childNodes[0])
+        const pageContainerPos = this.getAbsolutePosition(this.$refs.pageContainer)
+        const artworkPos = this.getAbsolutePosition(this.$refs.artwork)
 
         const mdHeightThreshold = 570
 
         // set default (xs)
-        this.$set(this.infoStyleObj, 'width', this.getContentWidth(pageContainer))
-        this.$delete(this.infoStyleObj, 'left')
-        this.infoSize = 4
+        this.$set(this.contentsInfoStyleObj, 'width', pageContainerPos.width + 'px')
+        this.$delete(this.contentsInfoStyleObj, 'left')
+        this.contentsInfoSize = 4
 
         if (window.innerWidth < this.$vuetify.breakpoint.thresholds.xs) {
           // xs
         } else if (window.innerWidth < this.$vuetify.breakpoint.thresholds.sm) {
           // sm
-          this.infoSize = 3
+          this.contentsInfoSize = 3
         } else if (
           window.innerWidth < this.$vuetify.breakpoint.thresholds.md &&
           window.innerHeight < mdHeightThreshold
         ) {
           // md && (height < mdHeightThreshold)
-          this.$set(this.infoStyleObj, 'width', this.getContentWidth(listElm))
-          this.$set(this.infoStyleObj, 'left', artworkElm.getBoundingClientRect().width + 36 + 'px')
-          this.infoSize = 4
+          this.$set(this.contentsInfoStyleObj, 'width', listPos.width + 'px ')
+          this.$set(this.contentsInfoStyleObj, 'left', artworkPos.width + 36 + 'px')
+          this.contentsInfoSize = 4
         } else if (window.innerWidth < this.$vuetify.breakpoint.thresholds.md) {
           // md
-          this.infoSize = 2
+          this.contentsInfoSize = 2
         } else {
           // lg and xl
-          this.$set(this.infoStyleObj, 'width', this.getContentWidth(listElm))
-          this.$set(this.infoStyleObj, 'left', artworkElm.getBoundingClientRect().width + 36 + 'px')
-          this.infoSize = 2
+          this.$set(this.contentsInfoStyleObj, 'width', listPos.width - 12 + 'px')
+          this.$set(this.contentsInfoStyleObj, 'left', artworkPos.width + 36 + 'px')
+          this.contentsInfoSize = 2
         }
       } catch (e) {
         // console.log(e)
@@ -194,25 +190,19 @@ export default {
       // ===== button の処理 =====
       this.setDownloadBtnBackground()
     },
-
-    getContentWidth(elm) {
-      const computedStyle = window.getComputedStyle(elm)
-      let width = this.extractNumber(computedStyle.width)
-      let paddingLeft = this.extractNumber(computedStyle.paddingLeft)
-      let paddingRight = this.extractNumber(computedStyle.paddingRight)
-      return width - paddingLeft - paddingRight + 'px'
-    },
     extractNumber(str) {
       return str.replace(/[^-0-9.]/g, '')
     },
     getAbsolutePosition(elm) {
-      const { top, bottom, left, right } = elm.getBoundingClientRect()
+      const { top, bottom, left, right, width, height } = elm.getBoundingClientRect()
       const { top: bTop, left: bLeft } = document.body.getBoundingClientRect()
       return {
         top: top - bTop,
         bottom: bottom - bTop,
         left: left - bLeft,
         right: right - bLeft,
+        width,
+        height,
       }
     },
     hex2rgb(hex) {
@@ -255,6 +245,7 @@ export default {
     downloadClass: function() {
       return {
         'download-xs': this.$vuetify.breakpoint.xs,
+        'download-sm': this.$vuetify.breakpoint.sm,
       }
     },
     pageClass: function() {
@@ -262,6 +253,13 @@ export default {
         'py-3': this.$vuetify.breakpoint.mdAndUp,
         'page-noScroll': !this.enableScroll,
         'page-scroll': this.enableScroll,
+      }
+    },
+    contentsInfoClass: function() {
+      return {
+        'contentsInfo-xs': this.$vuetify.breakpoint.xs,
+        'contentsInfo-smAndUp': this.$vuetify.breakpoint.smAndUp,
+        'contentsInfo-mdAndUp': this.$vuetify.breakpoint.mdAndUp,
       }
     },
   },
@@ -277,8 +275,8 @@ export default {
 }
 </script>
 
-<style lang="sass">
-#page
+<style lang="sass" scoped>
+.pageContainer
   height: 100vh
   position: relative
 .page-scroll
@@ -286,18 +284,28 @@ export default {
   overflow: hidden
   margin:
     bottom:-64px
-#info
+.contentsInfo
   margin:
     top: 24px
-#downloadBtn
+.download
   z-index: 3
   transform: translateY(-100%)
   text-align: right
 .download-xs
   position: fixed
+  transform: translateY(0%) !important
   width: 100%
-  transform: translateY(-0%) !important
-#releaseDate
-  &::before
-   content: "・"
+.download-sm
+
+
+.contentsInfo-xs
+.contentsInfo-smAndUp
+  margin:
+    bottom: -76px
+.contentsInfo-mdAndUp
+  position: absolute
+  bottom: 100px
+  margin:
+    bottom: -76px
+  overflow: hidden
 </style>

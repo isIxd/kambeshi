@@ -1,9 +1,9 @@
 <template>
-  <v-row no-gutters :class="infoClass">
-    <v-col :class="infoNameClass" cols="12">{{ name }}</v-col>
-    <v-col :class="infoArtistClass" cols="12"
+  <v-row no-gutters>
+    <v-col :class="contentsInfoNameClass" cols="12">{{ name }}</v-col>
+    <v-col :class="contentsInfoArtistClass" cols="12"
       >{{ artist
-      }}<span id="releaseDate">{{ releaseDate }} {{ $vuetify.breakpoint.name }}</span></v-col
+      }}<span class="releaseDate">{{ releaseDate }} {{ $vuetify.breakpoint.name }}</span></v-col
     >
     <slot> </slot>
   </v-row>
@@ -36,7 +36,7 @@ export default {
     },
   },
   computed: {
-    infoNameClass: function() {
+    contentsInfoNameClass: function() {
       return {
         'text-h1': this.size == 1,
         'text-h2': this.size == 2,
@@ -44,7 +44,7 @@ export default {
         'text-h4': this.size == 4,
       }
     },
-    infoArtistClass: function() {
+    contentsInfoArtistClass: function() {
       return {
         'text-h3': this.size == 1,
         'text-h4': this.size == 2,
@@ -52,31 +52,12 @@ export default {
         'text-h6': this.size == 4,
       }
     },
-    infoClass: function() {
-      return {
-        'info-xs': this.$vuetify.breakpoint.xs,
-        'info-smAndUp': this.$vuetify.breakpoint.smAndUp,
-        'info-mdAndUp': this.$vuetify.breakpoint.mdAndUp,
-      }
-    },
   },
 }
 </script>
 
-<style lang="sass">
-
-#info
-  margin:
-    top: 24px
-.info
-.info-xs
-.info-smAndUp
-  margin:
-    bottom: -76px
-.info-mdAndUp
-  position: absolute
-  bottom: 100px
-  margin:
-    bottom: -76px
-  overflow: hidden
+<style lang="sass" scoped>
+.releaseDate
+  &::before
+   content: "・"
 </style>

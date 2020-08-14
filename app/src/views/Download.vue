@@ -1,20 +1,19 @@
 <template>
   <v-container :class="{ 'page-noScroll': !enableScroll }">
-    <template v-if="type == 'single'"></template>
-    <DownloadPackage
-      v-else-if="type == 'package'"
-      v-on:enableScroll="setEnableScroll"
-    ></DownloadPackage>
+    <DownloadSingle v-if="type == 'single'" v-on:enableScroll="setEnableScroll"></DownloadSingle>
+    <DownloadPackage v-if="type == 'package'" v-on:enableScroll="setEnableScroll"></DownloadPackage>
   </v-container>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import DownloadPackage from '../components/DownloadPackage'
+import DownloadSingle from '../components/DownloadSingle'
 
 export default {
   components: {
     DownloadPackage,
+    DownloadSingle,
   },
   data: function() {
     return {
@@ -23,7 +22,9 @@ export default {
   },
   created: function() {
     // for dev
-    this.$store.dispatch('setSerialnumber', '44438208')
+    this.$store.dispatch('setSerialnumber', '74332454')
+    // this.$store.dispatch('setSerialnumber', '44438208')
+
     this.$store.dispatch('validateSerialnumber')
   },
   mounted: function() {},
@@ -35,7 +36,11 @@ export default {
   computed: {
     ...mapState(['serialnumber', 'isSerialnumberValid', 'type']),
   },
-  watch: {},
+  watch: {
+    type: newVal => {
+      console.log(newVal)
+    },
+  },
 }
 </script>
 
