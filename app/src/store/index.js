@@ -9,23 +9,32 @@ export default new Vuex.Store({
     serialnumber: '',
     serialnumberExists: false,
     isSerialnumberValid: false,
+    downloadsCount: 0,
+    downloadsRemaining: 0,
     type: '',
     package: { name: '', artist: '', artwork: '', releaseDate: {}, contents: [] },
     single: { name: '', artist: '', artwork: '', releaseDate: {} },
+    downloadCountInSession: 0,
   },
   mutations: {
     setSerialnumber: (state, serialnumber) => {
       state.serialnumber = serialnumber
+      state.downloadCountInSession = 0
     },
     setTargetData: (state, data) => {
       state.serialnumberExists = true
       state.isSerialnumberValid = data.downloadsRemaining > 0
       state.type = data.type
+      state.downloadsCount = data.downloadsCount
+      state.downloadsRemaining = data.downloadsRemaining
     },
     setContents: (state, payload) => {
       Object.keys(state[payload.type]).map(key => {
         Vue.set(state[payload.type], key, payload.data[key])
       })
+    },
+    incrementDownloadCountInSession: state => {
+      state.downloadCountInSession++
     },
   },
   actions: {
@@ -56,6 +65,18 @@ export default new Vuex.Store({
         .catch(err => {
           console.error(err)
         })
+    },
+    decrementDownloadsRemaining: ({ commit, state }) => {
+      commit('setTargetData', {
+        serialnumberExists: state.serialnumberExists,
+        isSerialnumberValid: state.isSerialnumberValid,
+        type: state.type,
+        downloadsCount: state.downloadsCount,
+        downloadsRemaining: state.downloadsRemaining - 1,
+      })
+    },
+    incrementDownloadCountInSession: ({ commit }) => {
+      commit('incrementDownloadCountInSession')
     },
   },
   modules: {},

@@ -35,14 +35,21 @@
             :class="downloadClass"
             :style="downloadBtnStyle"
           >
-            <v-col
-              ><v-btn
-                :x-large="$vuetify.breakpoint.mdAndUp"
-                :large="$vuetify.breakpoint.smAndDown"
-                color="primary"
-                :block="$vuetify.breakpoint.xs"
-                >ダウンロード</v-btn
-              >
+            <v-col>
+              <DownloadDetail>
+                <template v-slot:btn="slotProps">
+                  <v-btn
+                    id="btn"
+                    :x-large="$vuetify.breakpoint.mdAndUp"
+                    :large="$vuetify.breakpoint.smAndDown"
+                    color="primary"
+                    :block="$vuetify.breakpoint.xs"
+                    v-bind="slotProps.dialogProps.attrs"
+                    v-on="slotProps.dialogProps.on"
+                    >{{ downloadBtnMsg }}</v-btn
+                  >
+                </template>
+              </DownloadDetail>
             </v-col>
           </v-row>
         </ContentsInfomation>
@@ -54,10 +61,12 @@
 <script>
 import { mapState } from 'vuex'
 import ContentsInfomation from '../components/ContentsInfomation'
+import DownloadDetail from '../components/DownloadDetail'
 
 export default {
   components: {
     ContentsInfomation,
+    DownloadDetail,
   },
   data: function() {
     return {
@@ -148,7 +157,13 @@ export default {
     },
   },
   computed: {
-    ...mapState(['serialnumber', 'isSerialnumberValid', 'type', 'single']),
+    ...mapState([
+      'serialnumber',
+      'isSerialnumberValid',
+      'type',
+      'single',
+      'downloadCountInSession',
+    ]),
     releaseDate: function() {
       let result = ''
       if (typeof this.single.releaseDate.toDate == 'function') {
@@ -241,6 +256,10 @@ export default {
       } else {
         return 'center'
       }
+    },
+    downloadBtnMsg: function() {
+      if (this.downloadCountInSession == 0) return 'ダウンロード'
+      else return 'もう一度ダウンロード'
     },
   },
   watch: {

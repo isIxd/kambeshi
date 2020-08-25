@@ -6,11 +6,13 @@ const bucket = storage.bucket(functions.config().bucket.name)
 admin.initializeApp()
 const db = admin.firestore()
 
-const getDownloadUrls = publicRefs => {
-  return Promise.all(publicRefs.map(publicPath => getDownloadUrl(publicPath)))
+const getDownloadUrls = async publicRefs => {
+  const result = await Promise.all(publicRefs.map(publicPath => getDownloadUrl(publicPath)))
+  return [].concat(...result) // array.flat() の代替
 }
 
 const getDownloadUrl = publicRef => {
+  // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     const singleId = publicRef.id
     const privateDoc = await publicRef.parent.parent
@@ -18,13 +20,14 @@ const getDownloadUrl = publicRef => {
       .doc(singleId)
       .get()
     const file = bucket.file(privateDoc.data().data)
-    const data = await file.exists()
-    if (!data[0]) reject('The file does not exist.')
+    const existsData = await file.exists()
+    if (!existsData[0]) reject('The file does not exist.')
     const config = {
       action: 'read',
       expires: Date.now() + 1000 * 60 * 60 * 24, //now + 1day
     }
-    resolve(await file.getSignedUrl(config))
+    const data = await Promise.all([file.getSignedUrl(config), file.getMetadata()])
+    resolve([{ url: data[0][0], name: privateDoc.data().data, size: data[1][0].size }])
   })
 }
 
@@ -39,18 +42,19 @@ const downloadProcess = async snRef => {
     return Promise.reject('You cannot download any more!')
   } else {
     // ダウンロードURL発行処理
-    let downloadUrl = ''
+    let files = ''
     switch (snData.type) {
       case 'single':
-        downloadUrl = await getDownloadUrl(snData.contents)
+        files = await getDownloadUrl(snData.contents)
         break
       case 'package':
+        // eslint-disable-next-line no-case-declarations
         const packageDoc = await snData.contents.get()
-        downloadUrl = await getDownloadUrls(packageDoc.data().contents)
+        files = await getDownloadUrls(packageDoc.data().contents)
         break
     }
 
-    const result = { downloadUrl, type: snData.type }
+    const result = { files, type: snData.type }
 
     // ダウンロード残り回数を減らす
     try {
@@ -66,26 +70,19 @@ const downloadProcess = async snRef => {
   }
 }
 
-exports.download = functions.https.onRequest((req, res) => {
-  if (req.method !== 'GET') {
-    console.warn('Not Allowed: ' + req.method)
-    res.status(405).send('Method Not Allowed')
-    return
-  }
-  if (!req.query.serialnumber) {
-    res.status(400).send('Request Parameter')
-    return
+exports.download = functions.https.onCall(async data => {
+  if (!data.serialnumber) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'The function must be called with 8 digit serialnumber string'
+    )
   }
 
-  const snRef = db.collection('serialnumber').doc(req.query.serialnumber)
+  const snRef = db.collection('serialnumber').doc(data.serialnumber)
 
-  downloadProcess(snRef)
-    .then(result => {
-      console.log('Transaction success', result)
-      return res.status(200).json({ result })
-    })
-    .catch(err => {
-      console.log('Transaction failure:', error)
-      return res.status(400).json({ error })
-    })
+  const result = await downloadProcess(snRef).catch(error => {
+    console.log('Transaction failure:', error)
+    throw new functions.https.HttpsError('internal-error', error)
+  })
+  return result
 })
