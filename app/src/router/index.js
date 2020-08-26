@@ -1,28 +1,27 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import EnterSerialnumber from '../views/EnterSerialnumber.vue'
-import Download from '../views/Download.vue'
 
 Vue.use(VueRouter)
+
+const enterSerialnumber = () =>
+  import(/* webpackChunkName: 'EnterSerialnumber' */ '../views/EnterSerialnumber.vue')
+const download = () =>
+  import(/* webpackChunkName: 'Download', webpackPrefetch: true */ '../views/Download.vue')
 
 const routes = [
   {
     path: '/',
+    redirect: '/serialnumber',
+  },
+  {
+    path: '/serialnumber/:serialnumber?',
     name: 'EnterSerialnumber',
-    component: EnterSerialnumber,
+    component: enterSerialnumber,
   },
   {
     path: '/download',
     name: 'Download',
-    component: Download,
-  },
-  {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue'),
+    component: download,
   },
 ]
 

@@ -8,7 +8,7 @@ module.exports = {
       },
     },
   },
-  outputDir: 'app/src/public', // 2. 出力先
+  outputDir: 'app/dist', // 2. 出力先
   pages: {
     index: {
       entry: 'app/src/main.js', // エントリーポイント

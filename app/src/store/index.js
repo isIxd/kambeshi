@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import { validateSerialnumber, getPackageData, getSingleData } from '../firebase'
+import createPersistedState from 'vuex-persistedstate'
 
 Vue.use(Vuex)
 
@@ -41,30 +42,37 @@ export default new Vuex.Store({
     setSerialnumber: ({ commit }, serialnumber) => {
       commit('setSerialnumber', serialnumber)
     },
-    validateSerialnumber: async ({ state, commit }) => {
-      validateSerialnumber(state.serialnumber)
-        .then(data => {
-          commit('setTargetData', data)
-          switch (data.type) {
-            case 'package':
-              getPackageData(data.contents)
-                .then(packageData => {
-                  commit('setContents', { type: 'package', data: packageData })
-                })
-                .catch(err => console.log(err))
-              break
-            case 'single':
-              getSingleData(data.contents)
-                .then(singleData => {
-                  commit('setContents', { type: 'single', data: singleData })
-                })
-                .catch(err => console.log(err))
-              break
-          }
-        })
-        .catch(err => {
-          console.error(err)
-        })
+    validateSerialnumber: ({ state, commit, dispatch }) => {
+      return new Promise(resolve => {
+        validateSerialnumber(state.serialnumber)
+          .then(data => {
+            commit('setTargetData', data)
+            dispatch('setContents', data)
+            resolve({ serialnumberExists: true })
+          })
+          .catch(err => {
+            console.error(err)
+            resolve({ serialnumberExists: false })
+          })
+      })
+    },
+    setContents: ({ commit }, data) => {
+      switch (data.type) {
+        case 'package':
+          getPackageData(data.contents)
+            .then(packageData => {
+              commit('setContents', { type: 'package', data: packageData })
+            })
+            .catch(err => console.log(err))
+          break
+        case 'single':
+          getSingleData(data.contents)
+            .then(singleData => {
+              commit('setContents', { type: 'single', data: singleData })
+            })
+            .catch(err => console.log(err))
+          break
+      }
     },
     decrementDownloadsRemaining: ({ commit, state }) => {
       commit('setTargetData', {
@@ -83,4 +91,5 @@ export default new Vuex.Store({
   getters: {
     getPackage: state => state.package,
   },
+  plugins: [createPersistedState({ storage: window.sessionStorage })],
 })

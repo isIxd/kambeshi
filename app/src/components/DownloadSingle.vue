@@ -159,6 +159,7 @@ export default {
   computed: {
     ...mapState([
       'serialnumber',
+      'serialnumberExists',
       'isSerialnumberValid',
       'type',
       'single',

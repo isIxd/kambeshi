@@ -7,34 +7,34 @@
 
 <script>
 import { mapState } from 'vuex'
-import DownloadPackage from '../components/DownloadPackage'
-import DownloadSingle from '../components/DownloadSingle'
 
 export default {
   components: {
-    DownloadPackage,
-    DownloadSingle,
+    DownloadPackage: () =>
+      import(
+        /* webpackChunkName: 'DownloadPackage', webpackPrefetch: true */ '../components/DownloadPackage'
+      ),
+    DownloadSingle: () =>
+      import(
+        /* webpackChunkName: 'DownloadSingle', webpackPrefetch: true */ '../components/DownloadSingle'
+      ),
   },
   data: function() {
     return {
       enableScroll: false,
     }
   },
-  created: function() {
-    // for dev
-    this.$store.dispatch('setSerialnumber', '74332454')
-    // this.$store.dispatch('setSerialnumber', '44438208')
-
-    this.$store.dispatch('validateSerialnumber')
+  created: function() {},
+  mounted: function() {
+    if (!this.serialnumberExists) this.$router.replace({ path: '/serialnumber' })
   },
-  mounted: function() {},
   methods: {
     setEnableScroll(isEnabled) {
       this.enableScroll = isEnabled
     },
   },
   computed: {
-    ...mapState(['serialnumber', 'isSerialnumberValid', 'type']),
+    ...mapState(['serialnumber', 'serialnumberExists', 'isSerialnumberValid', 'type']),
   },
   watch: {
     type: newVal => {

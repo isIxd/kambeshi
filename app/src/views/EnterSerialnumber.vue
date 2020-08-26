@@ -10,7 +10,7 @@
         <v-row class="ma-0">
           <v-col
             id="serialForm"
-            v-for="(item, index) in serialnumber"
+            v-for="(item, index) in intaractiveSerialnumber"
             :key="item.order"
             class="pa-0 my-12"
           >
@@ -19,7 +19,7 @@
               ref="input"
               v-model.number="item.value"
               @input="checkInput(index)"
-              :autofocus="index == 0"
+              @keydown="checkKeydown(index, $event)"
               :height="$vuetify.breakpoint.name == 'xs' ? '60px' : '90px'"
               outlined
               class="pa-0"
@@ -27,8 +27,26 @@
           </v-col>
         </v-row>
       </v-col>
-      <v-col cols="12" align="center">
-        <v-btn ref="btn" :disabled="!entered" @click="submit" x-large style="margin: 0 auto">
+      <v-col cols="12" align="center" style="position: relative">
+        <p
+          style="margin:0 auto; width:100%"
+          class="text-caption text-sm-subtitle-1 validation-result-message"
+          :style="{
+            transform: `translateX(-50%) translateY(-${$vuetify.breakpoint.xs ? 250 : 180}%)`,
+          }"
+          color="error"
+        >
+          {{ validationResultMessage }}
+        </p>
+        <v-btn
+          ref="btn"
+          :disabled="!serialnumberExists"
+          x-large
+          style="margin: 0 auto"
+          :loading="isValidating"
+          ripple
+          :to="{ path: '/download' }"
+        >
           ダウンロードへ進む</v-btn
         >
       </v-col></v-row
@@ -37,9 +55,13 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+import { mapState } from 'vuex'
+
 export default {
+  name: 'EnterSerialnumber',
   data: () => ({
-    serialnumber: [
+    intaractiveSerialnumber: [
       { order: 0, value: '' },
       { order: 1, value: '' },
       { order: 2, value: '' },
@@ -49,36 +71,117 @@ export default {
       { order: 6, value: '' },
       { order: 7, value: '' },
     ],
+    isValidating: false,
+    validationResultMessage: '',
   }),
   methods: {
+    ...mapActions(['setSerialnumber', 'validateSerialnumber']),
     fullWidth2halfWidth: function(str) {
+      if (str.length < 1) return ''
       return str.toString().replace(/[０-９]/g, s => {
         return String.fromCharCode(s.charCodeAt(0) - 0xfee0)
       })
     },
+    checkKeydown: function(index, e) {
+      if (e.key != 'Backspace') return
+      this.$nextTick(() => {
+        if (index != 0) {
+          this.$set(this.intaractiveSerialnumber[index], 'value', '')
+          this.$refs.input[index - 1].focus()
+        }
+      })
+    },
     checkInput: function(index) {
+      this.validationResultMessage = ''
       // 全角数字を半角数字に
       // 2ケタ以上の場合は最後の数値
-      let target = this.fullWidth2halfWidth(this.serialnumber[index].value)
+      let target = this.fullWidth2halfWidth(this.intaractiveSerialnumber[index].value.toString())
         .toString()
         .slice(-1)
+
+      if (target == '') return
       // 数値を上書き
-      this.$nextTick(() => {
-        this.serialnumber[index].value = target
+      this.$nextTick(async () => {
+        this.$set(this.intaractiveSerialnumber[index], 'value', target)
+        // 8文字入力したらバリデーション
+        if (
+          this.intaractiveSerialnumber.every(item => {
+            if (item.value == undefined) return false
+            else return item.value.toString().match(/[0-9]/)
+          })
+        ) {
+          this.setSerialnumber(
+            this.intaractiveSerialnumber.reduce((acc, item) => acc + item.value, '')
+          )
+          this.validate()
+        }
       })
       // 次のinputをフォーカス
-      if (index < this.serialnumber.length - 1) {
+      if (index < this.intaractiveSerialnumber.length - 1) {
         this.$refs.input[index + 1].focus()
       }
     },
-    submit: function() {
-      // @TODO: Vuex, Vue-Router
-      console.log('submit')
+    validate: async function() {
+      this.isValidating = true
+      await this.validateSerialnumber()
+      if (this.serialnumberExists) {
+        this.validationResultMessage = ''
+        this.$refs.btn.$el.focus()
+      } else {
+        this.validationResultMessage = '不正なシリアルナンバーです。'
+        this.$refs.input[this.$refs.input.length - 1].focus()
+      }
+      this.isValidating = false
+    },
+    setIntaractiveSerialnumber: function(newSerialnumber) {
+      newSerialnumber
+        .toString()
+        .split('')
+        .forEach((digit, index) => {
+          this.$set(this.intaractiveSerialnumber[index], 'value', digit)
+        })
     },
   },
   computed: {
-    entered: function() {
-      return this.serialnumber.every(item => item.value > 0)
+    ...mapState(['serialnumber', 'serialnumberExists']),
+  },
+  mounted: async function() {
+    // DOMの処理
+    this.$refs.input.forEach(input => {
+      input.$el.querySelector('input').setAttribute('type', 'tel')
+    })
+
+    // params にシリアルナンバーがあったときの処理
+    if (this.$route.params.serialnumber && this.$route.params.serialnumber.toString().length > 0) {
+      this.setSerialnumber(
+        this.$route.params.serialnumber
+          .toString()
+          .split('')
+          .reduce((acc, digit) => {
+            return acc + this.fullWidth2halfWidth(digit)
+          }, '')
+      )
+      this.validate()
+    }
+
+    // 前のページから戻ったときの処理
+    if (this.serialnumberExists) {
+      this.setIntaractiveSerialnumber(this.serialnumber)
+
+      this.$refs.input[this.$refs.input.length - 1].focus()
+    } else {
+      this.$refs.input[0].focus()
+    }
+  },
+  watch: {
+    serialnumber: function(newVal) {
+      console.log(newVal)
+      this.setIntaractiveSerialnumber(newVal)
+      try {
+        this.$router.replace({ params: { newVal } })
+      } catch (e) {
+        console.log(e)
+      }
     },
   },
 }
@@ -107,4 +210,8 @@ $breakpoint-down: ('bp620': 'screen and (max-width: 619px)')
     text-align: center
     font-size: 32px
     caret-color: transparent
+.validation-result-message
+  position: absolute
+  top: 0
+  left: 50%
 </style>

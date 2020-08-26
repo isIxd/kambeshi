@@ -2,8 +2,7 @@
   <v-row no-gutters>
     <v-col :class="contentsInfoNameClass" cols="12">{{ name }}</v-col>
     <v-col :class="contentsInfoArtistClass" cols="12"
-      >{{ artist
-      }}<span class="releaseDate">{{ releaseDate }} {{ $vuetify.breakpoint.name }}</span></v-col
+      >{{ artist }}<span class="releaseDate">{{ releaseDate }} </span></v-col
     >
     <slot> </slot>
   </v-row>
