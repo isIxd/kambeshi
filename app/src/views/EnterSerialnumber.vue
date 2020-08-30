@@ -57,9 +57,21 @@
 <script>
 import { mapActions } from 'vuex'
 import { mapState } from 'vuex'
+import favicon from '@/assets/favicon.svg'
 
 export default {
   name: 'EnterSerialnumber',
+  metaInfo() {
+    return {
+      title: 'Enter Serialnumber',
+      link: [
+        {
+          rel: 'icon',
+          href: favicon,
+        },
+      ],
+    }
+  },
   data: () => ({
     intaractiveSerialnumber: [
       { order: 0, value: '' },

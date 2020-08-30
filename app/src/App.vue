@@ -38,9 +38,12 @@
 <script>
 export default {
   name: 'App',
-
-  components: {},
-
+  metaInfo() {
+    return {
+      title: '',
+      titleTemplate: '%s | Media Download System',
+    }
+  },
   data: () => ({
     //
   }),
@@ -50,5 +53,5 @@ export default {
 <style lang="sass">
 body
   height: 100vh
-   overflow: hidden
+  overflow: hidden
 </style>

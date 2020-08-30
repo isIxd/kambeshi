@@ -19,6 +19,19 @@ export default {
         /* webpackChunkName: 'DownloadSingle', webpackPrefetch: true */ '../components/DownloadSingle'
       ),
   },
+  metaInfo() {
+    const ref = this.type == 'single' ? this.single : this.type == 'package' ? this.pack : null
+    if (!ref) return
+    return {
+      title: ref.name,
+      link: [
+        {
+          rel: 'icon',
+          href: ref.artwork,
+        },
+      ],
+    }
+  },
   data: function() {
     return {
       enableScroll: false,
@@ -34,7 +47,8 @@ export default {
     },
   },
   computed: {
-    ...mapState(['serialnumber', 'serialnumberExists', 'isSerialnumberValid', 'type']),
+    ...mapState(['serialnumber', 'serialnumberExists', 'isSerialnumberValid', 'type', 'single']),
+    ...mapState({ pack: state => state.package }), // 'package' is reserved name
   },
   watch: {
     type: newVal => {
