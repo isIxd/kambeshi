@@ -214,4 +214,6 @@ $breakpoint-down: ('bp620': 'screen and (max-width: 619px)')
   position: absolute
   top: 0
   left: 50%
+.v-input input
+  max-height: initial !important
 </style>
