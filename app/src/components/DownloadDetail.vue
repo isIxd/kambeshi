@@ -5,24 +5,24 @@
     </template>
 
     <v-card>
-      <v-card-title class="headline text-center" style="text-align:center">
-        <span v-if="isDownloadCompleated">ダウンロードが完了しました</span>
-        <span v-else>ダウンロードしています</span>
+      <v-card-title class="text-center text-h6 text-md-h4" style="text-align:center">
+        {{ dialogTitle }}
       </v-card-title>
 
-      <v-card-text>
+      <v-card-text class="text-body-2 text-md-h6">
         <p></p>
         <v-progress-linear
           v-model="downloadedValue"
-          :buffer-value="downloadedValue"
-          :value="downloadedValue"
+          :buffer-value="isSerialnumberValid ? downloadedValue : 100"
+          :value="isSerialnumberValid ? downloadedValue : 100"
           color="deep-purple accent-4"
-          height="16px"
+          :height="$vuetify.breakpoint.mobile ? '12px' : '16px'"
           rounded
           :stream="downloadedValue != 0"
-          :indeterminate="downloadedValue == 0"
+          :indeterminate="isSerialnumberValid && downloadedValue == 0"
+          style="marginBottom: 24px"
         ></v-progress-linear>
-        <p></p>
+
         <p>
           {{ dialogText }}
         </p>
@@ -35,7 +35,8 @@
         <v-spacer></v-spacer>
 
         <v-btn
-          :disabled="!isDownloadCompleated"
+          :disabled="!isDownloadCompleated && isSerialnumberValid"
+          class="text-body-1 text-md-h6"
           color="green darken-1"
           text
           @click="dialog = false"
@@ -69,6 +70,7 @@ export default {
     async download() {
       // get download urls
       console.log('download')
+      if (!this.isSerialnumberValid) return
       const downloadFunction = firebase.functions().httpsCallable('download')
       const data = await downloadFunction({
         serialnumber: this.serialnumber,
@@ -203,15 +205,26 @@ export default {
     console.log(platform)
   },
   computed: {
-    ...mapState(['serialnumber', 'isSerialnumberValid', 'type', 'single', 'downloadsRemaining']),
+    ...mapState([
+      'serialnumber',
+      'isSerialnumberValid',
+      'type',
+      'single',
+      'downloadsRemaining',
+      'downloadsCount',
+    ]),
     ...mapState({ pack: state => state.package }), // 'package' is reserved name
     dialogText: function() {
-      if (this.downloadsRemaining - 1 > 0) {
+      if (this.downloadsRemaining - 1 > 0)
         return `ダウンロードしたファイルを紛失してしまった場合、このシリアルナンバーで残り${this
           .downloadsRemaining - 1}回ダウンロードできます`
-      } else {
-        return ''
-      }
+      else if (this.isSerialnumberValid) return ''
+      else return `ダウンロード上限 (${this.downloadsCount}回) に達したため、ダウンロードできません`
+    },
+    dialogTitle: function() {
+      if (!this.isSerialnumberValid) return 'ダウンロード上限に達しました'
+      else if (!this.isDownloadCompleated) return 'ダウンロードしています'
+      else return 'ダウンロード完了'
     },
     downloadedValue: function() {
       let result
@@ -227,14 +240,11 @@ export default {
 
   watch: {
     dialog: function(newVal) {
-      // ダイアログが開いたときの処理
-      if (newVal) {
-        //
-      }
-      // 閉じたときの処理
-      else {
+      // ダウンロード完了してダイアログを閉じたときの処理
+      if (!newVal && this.isSerialnumberValid) {
         this.$store.dispatch('decrementDownloadsRemaining')
         this.$store.dispatch('incrementDownloadCountInSession')
+        this.isDownloadCompleated = false
       }
     },
   },
