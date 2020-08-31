@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="dialog" persistent max-width="800">
     <template v-slot:activator="{ on, attrs }">
-      <slot name="btn" v-bind:dialogProps="{ on, attrs }"> </slot>
+      <slot name="btn" v-bind:dialogProps="{ on, attrs }" v-bind:download="download"> </slot>
     </template>
 
     <v-card>
@@ -50,7 +50,11 @@
 <script>
 import { mapState } from 'vuex'
 import { firebase } from '../firebase'
+import axios from 'axios'
 import streamSaver from 'streamsaver'
+import { saveAs } from 'file-saver'
+import JSZip from 'jszip'
+import platform from 'platform'
 
 export default {
   data() {
@@ -63,8 +67,7 @@ export default {
   },
   methods: {
     async download() {
-      this.totalChunk = 0
-      this.loadedCunk = 0
+      // get download urls
       console.log('download')
       const downloadFunction = firebase.functions().httpsCallable('download')
       const data = await downloadFunction({
@@ -72,35 +75,41 @@ export default {
       }).catch(error => {
         console.log(error)
       })
-
+      const files = data.data.files
       console.log(data.data)
+      // download Process
+      this.totalChunk = 0
+      this.loadedCunk = 0
+      if (platform.os.family == 'Android' && platform.name == 'Chrome Mobile')
+        this.downloadProcessOnAndroidChrome(files)
+      else this.downloadProcessOnOthers(files)
+    },
 
+    async downloadProcessOnAndroidChrome(files) {
+      // https か localhost 以外で接続すると複数ファイルダウンロードできない
+      console.log('downloadProcessOnAndroidChrome')
       const save = (file, index) => {
         return new Promise((resolve, reject) => {
           fetch(file.url).then(res => {
-            let reader = res.body.tee()
-
-            const progressReader = reader[0].getReader()
-            const readProgress = result => {
-              // done が true なら最後の chunk
-              if (result.done) {
-                return
-              }
-              this.loadedCunk += result.value.length
-              console.log(
-                `${index}  received: ${this.loadedCunk}(${Math.round(
-                  (this.loadedCunk / this.totalChunk) * 100
-                )} %)    ${this.totalChunk}`
-              )
-              return progressReader.read().then(readProgress)
-            }
-            progressReader.read().then(readProgress)
+            // eslint-disable-next-line no-undef
+            const progress = new TransformStream({
+              transform: (chunk, controller) => {
+                this.loadedCunk += chunk.length
+                controller.enqueue(chunk)
+                console.log(
+                  `${index}  received: ${this.loadedCunk}(${Math.round(
+                    (this.loadedCunk / this.totalChunk) * 100
+                  )} %)    ${this.totalChunk}`
+                )
+              },
+            })
 
             const fileStream = streamSaver.createWriteStream(file.name)
-            const readableStream = reader[1]
+            const readableStream = res.body
 
             if (window.WritableStream && readableStream.pipeTo) {
               return readableStream
+                .pipeThrough(progress)
                 .pipeTo(fileStream)
                 .then(() => {
                   console.log('done writing')
@@ -122,16 +131,77 @@ export default {
         })
       }
       Promise.all(
-        data.data.files.map((file, index) => {
+        files.map((file, index) => {
+          this.totalChunk += Number(file.size)
+          return save(file, index)
+        })
+      ).then(result => console.log(result))
+    },
+
+    async downloadProcessOnOthers(files) {
+      console.log('downloadProcessOnOthers')
+      const save = (file, index) => {
+        return new Promise(resolve => {
+          let preLoaded = 0
+          axios({
+            method: 'get',
+            url: file.url,
+            responseType: 'blob',
+            onDownloadProgress: progressEvent => {
+              const currentLoaded = progressEvent.loaded - preLoaded
+              preLoaded += currentLoaded
+              this.loadedCunk += currentLoaded
+              console.log(
+                `received(${index}):  ${this.loadedCunk}(${Math.round(
+                  (this.loadedCunk / this.totalChunk) * 100
+                )} %)    ${this.totalChunk}`
+              )
+            },
+          })
+            .then(response => {
+              const blob = new Blob([response.data], {
+                type: response.data.type,
+              })
+              // saveAs(blob, file.name)
+              console.log('done writing')
+              resolve({ ok: true, file, index, data: blob })
+            })
+            .catch(error => {
+              console.log(index, error)
+              resolve({
+                ok: false,
+                msg: 'ファイルの保存に失敗しました。',
+                error,
+                file,
+                index,
+                data: null,
+              })
+            })
+        })
+      }
+
+      const zip = new JSZip()
+      const zipName =
+        this.type == 'single' ? this.single.name : this.type == 'package' ? this.pack.name : null
+      const folder = zip.folder(zipName)
+
+      const result = await Promise.all(
+        files.map((file, index) => {
           this.totalChunk += Number(file.size)
           return save(file, index)
         })
       )
-        .then(result => console.log(result))
-        .catch(error => console.error(error))
+      result.forEach(result => {
+        folder.file(result.file.name, result.data)
+      })
+
+      const blob = await zip.generateAsync({ type: 'blob' })
+      saveAs(blob, zipName)
     },
   },
-  mounted() {},
+  mounted() {
+    console.log(platform)
+  },
   computed: {
     ...mapState(['serialnumber', 'isSerialnumberValid', 'type', 'single', 'downloadsRemaining']),
     ...mapState({ pack: state => state.package }), // 'package' is reserved name
@@ -158,7 +228,9 @@ export default {
   watch: {
     dialog: function(newVal) {
       // ダイアログが開いたときの処理
-      if (newVal) this.download()
+      if (newVal) {
+        //
+      }
       // 閉じたときの処理
       else {
         this.$store.dispatch('decrementDownloadsRemaining')

@@ -46,6 +46,7 @@
                     :block="$vuetify.breakpoint.xs"
                     v-bind="slotProps.dialogProps.attrs"
                     v-on="slotProps.dialogProps.on"
+                    @click="slotProps.download"
                     >{{ downloadBtnMsg }}</v-btn
                   >
                 </template>
