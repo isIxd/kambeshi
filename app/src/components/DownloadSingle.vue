@@ -42,7 +42,7 @@
                     id="btn"
                     :x-large="$vuetify.breakpoint.mdAndUp"
                     :large="$vuetify.breakpoint.smAndDown"
-                    color="primary"
+                    color="accent"
                     :block="$vuetify.breakpoint.xs"
                     v-bind="slotProps.dialogProps.attrs"
                     v-on="slotProps.dialogProps.on"

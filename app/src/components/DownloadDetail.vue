@@ -15,7 +15,7 @@
           v-model="downloadedValue"
           :buffer-value="isSerialnumberValid ? downloadedValue : 100"
           :value="isSerialnumberValid ? downloadedValue : 100"
-          color="deep-purple accent-4"
+          color="accent"
           :height="$vuetify.breakpoint.mobile ? '12px' : '16px'"
           rounded
           :stream="downloadedValue != 0"
@@ -26,7 +26,16 @@
         <p>
           {{ dialogText }}
         </p>
-        <p>ダウンロードが上手くいかない場合は<a href="#">コチラ</a>からお問い合わせください</p>
+        <p>
+          ダウンロードが上手くいかない場合は<a
+            href="https://docs.google.com/forms/d/e/1FAIpQLScwSAHdOBM9sVOPPNfLpji79HKwOZcbJvMBgIPQOTEXO9NWhA/viewform"
+            target="newtab"
+            :style="{
+              color: $vuetify.theme.themes[$vuetify.theme.dark ? 'dark' : 'light'].secondary,
+            }"
+            >コチラ</a
+          >からお問い合わせください
+        </p>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -37,7 +46,7 @@
         <v-btn
           :disabled="!isDownloadCompleated && isSerialnumberValid"
           class="text-body-1 text-md-h6"
-          color="green darken-1"
+          :color="$vuetify.theme.dark ? 'accent lighten-2' : 'accent'"
           text
           @click="dialog = false"
         >
@@ -245,6 +254,17 @@ export default {
         this.$store.dispatch('decrementDownloadsRemaining')
         this.$store.dispatch('incrementDownloadCountInSession')
         this.isDownloadCompleated = false
+      }
+
+      const onBeforeunload = () => {
+        console.log('beore unload')
+        this.dialog = false
+      }
+
+      if (newVal) {
+        window.addEventListener('beforeunload', onBeforeunload)
+      } else {
+        window.removeEventListener('beforeunload', onBeforeunload)
       }
     },
   },

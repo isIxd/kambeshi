@@ -23,7 +23,7 @@ export default {
     const ref = this.type == 'single' ? this.single : this.type == 'package' ? this.pack : null
     if (!ref) return
     return {
-      title: ref.name,
+      title: `${ref.name} |`,
       link: [
         {
           rel: 'icon',
@@ -50,12 +50,11 @@ export default {
     ...mapState(['serialnumber', 'serialnumberExists', 'isSerialnumberValid', 'type', 'single']),
     ...mapState({ pack: state => state.package }), // 'package' is reserved name
   },
-  watch: {
-    type: newVal => {
-      console.log(newVal)
-    },
-  },
+  watch: {},
 }
 </script>
 
-<style lang="sass"></style>
+<style lang="sass">
+.page-noScroll
+  overflow: hidden
+</style>

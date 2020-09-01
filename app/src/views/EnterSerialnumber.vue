@@ -15,6 +15,7 @@
             class="pa-0 my-12"
           >
             <v-text-field
+              color="accent"
               hide-details
               ref="input"
               v-model.number="item.value"
@@ -29,16 +30,17 @@
       </v-col>
       <v-col cols="12" align="center" style="position: relative">
         <p
-          style="margin:0 auto; width:100%"
+          style="margin:0 auto; width:100%;"
           class="text-caption text-sm-subtitle-1 validation-result-message"
           :style="{
             transform: `translateX(-50%) translateY(-${$vuetify.breakpoint.xs ? 250 : 180}%)`,
+            color: $vuetify.theme.themes[$vuetify.theme.dark ? 'dark' : 'light'].error,
           }"
-          color="error"
         >
           {{ validationResultMessage }}
         </p>
         <v-btn
+          color="accent"
           ref="btn"
           :disabled="!serialnumberExists"
           x-large
@@ -63,7 +65,7 @@ export default {
   name: 'EnterSerialnumber',
   metaInfo() {
     return {
-      title: 'Enter Serialnumber',
+      title: 'Enter A Serialnumber |',
       link: [
         {
           rel: 'icon',

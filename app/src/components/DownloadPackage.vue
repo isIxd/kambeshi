@@ -30,7 +30,7 @@
                     id="btn"
                     :x-large="$vuetify.breakpoint.mdAndUp"
                     :large="$vuetify.breakpoint.smAndDown"
-                    color="primary"
+                    color="accent"
                     :block="$vuetify.breakpoint.xs"
                     v-bind="slotProps.dialogProps.attrs"
                     v-on="slotProps.dialogProps.on"
@@ -49,6 +49,7 @@
           fixed-header
           :height="listHeight"
           :style="{ paddingBottom: !enableScroll ? 0 : $vuetify.breakpoint.xs ? '80px' : '36px' }"
+          ref="table"
         >
           <template v-slot:default>
             <thead>
@@ -115,6 +116,12 @@ export default {
       }
     }, 100)
     this.setDownloadBtnBackground()
+
+    // テーブルのbackground
+    const color = this.$vuetify.theme.themes[this.$vuetify.theme.dark ? 'dark' : 'light'].background
+    const tableTag = this.$refs.table.$el.querySelector('table')
+    tableTag.style.background = color
+    tableTag.querySelectorAll('th').forEach(th => (th.style.background = color))
   },
   methods: {
     onResize() {
@@ -230,13 +237,13 @@ export default {
       })
     },
     setDownloadBtnBackground() {
-      // @TODO: set $vuetify page color
+      const color = this.$vuetify.theme.themes[this.$vuetify.theme.dark ? 'dark' : 'light']
+        .background
+      // ダウンロードボタンのbackground
       if (this.$vuetify.breakpoint.thresholds.xs < window.innerWidth) {
         this.$delete(this.downloadBtnStyle, 'background')
       } else {
-        const dark = '#121212'
-        const light = '#FFFFFF'
-        const rgb = this.hex2rgb(this.$vuetify.theme.dark ? dark : light)
+        const rgb = this.hex2rgb(color)
         const background = `linear-gradient(to top, rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 1), 95%, rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0))`
         this.$set(this.downloadBtnStyle, 'background', background)
       }
