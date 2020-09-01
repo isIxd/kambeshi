@@ -30,8 +30,19 @@ export default new Vuex.Store({
       state.downloadsRemaining = data.downloadsRemaining
     },
     setContents: (state, payload) => {
+      // 格納時に Timestamp 型はUNIXエポックに変換
       Object.keys(state[payload.type]).map(key => {
-        Vue.set(state[payload.type], key, payload.data[key])
+        if (key == 'releaseDate')
+          Vue.set(state[payload.type], key, payload.data['releaseDate'].toDate().getTime())
+        else if (key == 'contents')
+          Vue.set(
+            state[payload.type],
+            'contents',
+            payload.data['contents'].map(content => {
+              return { ...content, releaseDate: content.releaseDate.toDate().getTime() }
+            })
+          )
+        else Vue.set(state[payload.type], key, payload.data[key])
       })
     },
     incrementDownloadCountInSession: state => {

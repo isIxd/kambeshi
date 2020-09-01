@@ -26,7 +26,7 @@
           :class="contentsInfoClass"
           :name="single.name"
           :artist="single.artist"
-          :releaseDate="releaseDate"
+          :releaseDate="new Date(single.releaseDate).toLocaleDateString()"
           :size="contentsInfoSize"
           ><v-row
             ref="downloadBtn"
@@ -166,13 +166,6 @@ export default {
       'single',
       'downloadCountInSession',
     ]),
-    releaseDate: function() {
-      let result = ''
-      if (typeof this.single.releaseDate.toDate == 'function') {
-        result = this.single.releaseDate.toDate().toLocaleDateString()
-      }
-      return result
-    },
     downloadClass: function() {
       return {
         'download-xs': this.$vuetify.breakpoint.xs,

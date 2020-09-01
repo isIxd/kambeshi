@@ -13,7 +13,7 @@
           :style="contentsInfoStyleObj"
           :name="pack.name"
           :artist="pack.artist"
-          :releaseDate="releaseDate"
+          :releaseDate="new Date(pack.releaseDate).toLocaleDateString()"
           :size="contentsInfoSize"
         >
           <v-row
@@ -66,7 +66,7 @@
                 </td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.artist }}</td>
-                <td>{{ item.releaseDate.toDate().toLocaleDateString() }}</td>
+                <td>{{ new Date(item.releaseDate).toLocaleDateString() }}<br /></td>
               </tr>
             </tbody>
           </template>
@@ -245,13 +245,6 @@ export default {
   computed: {
     ...mapState(['serialnumber', 'isSerialnumberValid', 'type', 'downloadCountInSession']),
     ...mapState({ pack: state => state.package }), // 'package' is reserved name
-    releaseDate: function() {
-      let result = ''
-      if (typeof this.pack.releaseDate.toDate == 'function') {
-        result = this.pack.releaseDate.toDate().toLocaleDateString()
-      }
-      return result
-    },
     downloadClass: function() {
       return {
         'download-xs': this.$vuetify.breakpoint.xs,
