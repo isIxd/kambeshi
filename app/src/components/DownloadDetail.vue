@@ -193,7 +193,11 @@ export default {
 
       const zip = new JSZip()
       const zipName =
-        this.type == 'single' ? this.single.name : this.type == 'package' ? this.pack.name : null
+        (this.type == 'single'
+          ? this.single.name
+          : this.type == 'package'
+          ? this.pack.name
+          : null) + '.zip'
       const folder = zip.folder(zipName)
 
       const result = await Promise.all(
