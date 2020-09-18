@@ -10,25 +10,39 @@ admin.initializeApp({
 const db = admin.firestore()
 
 // ---------- SETTING ----------
-const name = 'AWESOME SINGLE'
-const artist = 'AWESOME ARTIST'
-const artwork = 'https://i.gyazo.com/bdcdc96bc5334cea9487acf283a2a641.jpg'
-const data = 'AWESOME_FILE.txt'
-const releaseDate = new Date('2020/08/01')
+const name = [
+  'May Be Blues',
+  'whisper',
+  'ほほえみ',
+  'テジナ',
+  '迷いの風',
+  '黄色線',
+  'ENDLESS',
+  '声',
+  'そういうことなのさ',
+  '足を止めるから',
+]
+const artist = 'shunhiro'
+const artwork =
+  'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2Fpackage%2Fopen%20your%20path%2Fopen%20your%20path_artwork.png?alt=media&token=2aed185f-2954-4b0c-b192-aabcafdda433'
+const data = 'private/package/open your path/'
+const releaseDate = new Date('2020/09/06')
 // ---------- SETTING ----------
 const publicRef = db.collection('single/info/public')
 const privateRef = db.collection('single/info/private')
 
-const registerSingle = () => {
-  publicRef
-    .add({ name, artist, artwork, releaseDate })
-    .then(docRef => {
-      console.log(docRef.id)
-      privateRef.doc(docRef.id).set({ data })
-    })
-    .catch(e => {
-      console.log(e)
-    })
+const registerSingle = async name => {
+  const docRef = await publicRef.add({ name, artist, artwork, releaseDate })
+
+  privateRef.doc(docRef.id).set({ data: `${data}${name}.mp3` })
+  console.log(`'${docRef.id}',`)
+  return { id: `'${docRef.id}',` }
 }
 
-registerSingle()
+const func = async () => {
+  const promises = name.map(n => registerSingle(n))
+  const result = await Promise.all(promises)
+  result.forEach(r => console.log(r.id))
+}
+
+func()

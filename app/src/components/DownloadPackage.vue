@@ -44,11 +44,17 @@
         </ContentsInfomation>
       </v-col>
 
-      <v-col id="list" ref="list">
+      <v-col
+        id="list"
+        ref="list"
+        :style="{ paddingTop: $vuetify.breakpoint.smAndDown ? '0px' : 'inherit' }"
+      >
         <v-simple-table
           fixed-header
           :height="listHeight"
-          :style="{ paddingBottom: !enableScroll ? 0 : $vuetify.breakpoint.xs ? '80px' : '36px' }"
+          :style="{
+            paddingBottom: !enableScroll ? 0 : $vuetify.breakpoint.xs ? '80px' : '36px',
+          }"
           ref="table"
         >
           <template v-slot:default>
@@ -129,22 +135,23 @@ export default {
       let result
       try {
         const listPos = this.getAbsolutePosition(this.$refs.list.childNodes[0])
+        const listPagePos = this.getPagePosition(this.$refs.list.childNodes[0])
         const downloadBtnPos = this.getAbsolutePosition(this.$refs.downloadBtn)
         const contentsInfoPos = this.getAbsolutePosition(this.$refs.contentsInfo.$el)
         const artworkPos = this.getAbsolutePosition(this.$refs.artwork)
-        const listHeightThreshold = 150
+        const listHeightThreshold = 160
 
-        if (artworkPos.heght == 0)
+        if (artworkPos.height == 0)
           setTimeout(() => {
             this.onResize()
           }, 100)
 
         switch (this.$vuetify.breakpoint.name) {
           case 'xs':
-            result = downloadBtnPos.top - listPos.top - 12 + 'px'
+            result = window.innerHeight - listPagePos.top - downloadBtnPos.height + 'px'
             break
           case 'sm':
-            result = window.innerHeight - listPos.top - 36 + 'px'
+            result = window.innerHeight - listPagePos.top - 24 + 'px'
             break
           default:
             result = contentsInfoPos.top - listPos.top - 36 + 'px'
@@ -152,7 +159,7 @@ export default {
         }
 
         if (
-          this.extractNumber(result) < listHeightThreshold &&
+          parseInt(result) < listHeightThreshold &&
           window.innerWidth < this.$vuetify.breakpoint.thresholds.sm
         ) {
           result = undefined
@@ -171,7 +178,7 @@ export default {
         const pageContainerPos = this.getAbsolutePosition(this.$refs.pageContainer)
         const artworkPos = this.getAbsolutePosition(this.$refs.artwork)
 
-        const mdHeightThreshold = 570
+        const mdHeightThreshold = 620
 
         // set default (xs)
         this.$set(this.contentsInfoStyleObj, 'width', pageContainerPos.width + 'px')
@@ -207,10 +214,20 @@ export default {
       // ===== button の処理 =====
       this.setDownloadBtnBackground()
     },
-    extractNumber(str) {
-      return str.replace(/[^-0-9.]/g, '')
-    },
+
     getAbsolutePosition(elm) {
+      const { top, bottom, left, right, width, height } = elm.getBoundingClientRect()
+      const { top: bTop, left: bLeft } = document.body.getBoundingClientRect()
+      return {
+        top: top - bTop - window.scrollY,
+        bottom: bottom - bTop - window.scrollY,
+        left: left - bLeft,
+        right: right - bLeft,
+        width,
+        height,
+      }
+    },
+    getPagePosition(elm) {
       const { top, bottom, left, right, width, height } = elm.getBoundingClientRect()
       const { top: bTop, left: bLeft } = document.body.getBoundingClientRect()
       return {
@@ -283,7 +300,6 @@ export default {
     },
     enableScroll: function(newVal) {
       this.$emit('enableScroll', newVal)
-      console.log('enableScroll', newVal)
     },
   },
 }
@@ -322,4 +338,6 @@ export default {
   margin:
     bottom: -76px
   overflow: hidden
+.v-data-table
+  background-color: inherit
 </style>

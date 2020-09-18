@@ -1,5 +1,7 @@
 service firebase.storage {
   match /b/{bucket}/o {
-    allow read: if false
+    match /public/{file=**}{
+      allow get: if true
+    }
   }
 }

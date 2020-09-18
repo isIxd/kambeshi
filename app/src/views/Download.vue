@@ -1,5 +1,5 @@
 <template>
-  <v-container :class="{ 'page-noScroll': !enableScroll }">
+  <v-container :class="{ 'page-noScroll': !enableScroll }" class="pb-0 mb-n3">
     <DownloadSingle v-if="type == 'single'" v-on:enableScroll="setEnableScroll"></DownloadSingle>
     <DownloadPackage v-if="type == 'package'" v-on:enableScroll="setEnableScroll"></DownloadPackage>
   </v-container>
@@ -34,7 +34,7 @@ export default {
   },
   data: function() {
     return {
-      enableScroll: false,
+      enableScroll: true,
     }
   },
   created: function() {},
@@ -44,6 +44,7 @@ export default {
   methods: {
     setEnableScroll(isEnabled) {
       this.enableScroll = isEnabled
+      this.$emit('enableScroll', isEnabled)
     },
   },
   computed: {

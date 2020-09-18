@@ -14,6 +14,7 @@ const getDownloadUrls = async publicRefs => {
 const getDownloadUrl = publicRef => {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
+    const publicData = await publicRef.get()
     const singleId = publicRef.id
     const privateDoc = await publicRef.parent.parent
       .collection('private')
@@ -27,7 +28,18 @@ const getDownloadUrl = publicRef => {
       expires: Date.now() + 1000 * 60 * 60 * 24, //now + 1day
     }
     const data = await Promise.all([file.getSignedUrl(config), file.getMetadata()])
-    resolve([{ url: data[0][0], name: privateDoc.data().data, size: data[1][0].size }])
+    const temp = privateDoc.data().data.split('.')
+    const extension = temp[temp.length - 1]
+    const singleData = publicData.data()
+    resolve([
+      {
+        url: data[0][0],
+        name: `${singleData.name}.${extension}`,
+        size: data[1][0].size,
+        extension,
+        artwork: singleData.artwork,
+      },
+    ])
   })
 }
 
@@ -70,7 +82,7 @@ const downloadProcess = async snRef => {
   }
 }
 
-exports.download = functions.https.onCall(async data => {
+exports.download = functions.region('asia-northeast1').https.onCall(async data => {
   if (!data.serialnumber) {
     throw new functions.https.HttpsError(
       'invalid-argument',

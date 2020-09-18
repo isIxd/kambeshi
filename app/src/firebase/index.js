@@ -1,6 +1,7 @@
 import ENV from './firebaseConfig.env.json'
-import firebase from 'firebase'
+import firebase from 'firebase/app'
 import 'firebase/firestore'
+import 'firebase/functions'
 
 firebase.initializeApp({
   apiKey: ENV.apiKey,
@@ -9,6 +10,7 @@ firebase.initializeApp({
 })
 
 const db = firebase.firestore()
+const functions = firebase.app().functions('asia-northeast1')
 
 const validateSerialnumber = async serialnumber => {
   // eslint-disable-next-line no-async-promise-executor
@@ -42,4 +44,4 @@ const getSingleData = async singleRef => {
   }
 }
 
-export { firebase, db, validateSerialnumber, getPackageData, getSingleData }
+export { functions, db, validateSerialnumber, getPackageData, getSingleData }

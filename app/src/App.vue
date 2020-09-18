@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app :class="{ 'page-noScroll': !enableScroll }">
     <v-app-bar app color="primary" dark fixed>
       <div class="d-flex align-center">
         <v-img
@@ -56,7 +56,7 @@
     </v-app-bar>
 
     <v-main>
-      <router-view></router-view>
+      <router-view v-on:enableScroll="setEnableScroll"></router-view>
     </v-main>
   </v-app>
 </template>
@@ -71,10 +71,20 @@ export default {
     }
   },
   data() {
-    return { dialog: false }
+    return { dialog: false, enableScroll: true }
   },
   mounted() {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) this.$vuetify.theme.dark = true
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      this.$vuetify.theme.dark = true
+    }
+    document.body.style.background = this.$vuetify.theme.themes[
+      this.$vuetify.theme.dark ? 'dark' : 'light'
+    ].background
+  },
+  methods: {
+    setEnableScroll(isEnabled) {
+      this.enableScroll = isEnabled
+    },
   },
 }
 </script>
@@ -82,5 +92,6 @@ export default {
 <style lang="sass">
 body
   height: 100vh
+.page-noScroll
   overflow: hidden
 </style>

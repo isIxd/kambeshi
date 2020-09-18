@@ -1,4 +1,5 @@
 const admin = require('firebase-admin')
+const fs = require('fs')
 
 const serviceAccount = require('./.key/kambeshi-c8022-firebase-adminsdk-ap4b8-79c9eedccb.json')
 
@@ -10,15 +11,19 @@ admin.initializeApp({
 const db = admin.firestore()
 
 // ---------- SETTING ----------
-const quantity = 3 //シリアルナンバー作成数
+const quantity = 1 //シリアルナンバー作成数
 const digit = 8 //シリアルナンバーのケタ数
-const type = 'single' //'single' or 'package'
+const type = 'package' //'single' or 'package'
 const downloadsCount = 0 //0 ダウンロード数
 const downloadsRemaining = 3 //ダウンロード可能回数
-const contents = db.doc('/single/info/public/I55IZXrYMcDBC0TDSFCP') //'single' か 'package'のRef
+const contents = db.doc('/package/zxoordHHXZmYUKpbM6YF') //'single' か 'package'のRef
+const isTest = true // テスト用のシリアルナンバーかどうか
+const tag = 'temp' // 任意のタグ
 // ---------- SETTING ----------
+const baseUrl = 'https://download.shunhiro.com/serialnumber/'
 
 const generateSerialnumber = () => {
+  const generatedSerialnumbers = []
   const max = Math.pow(10, digit)
 
   const values = {
@@ -28,6 +33,8 @@ const generateSerialnumber = () => {
     contents: contents,
     createdDate: admin.firestore.FieldValue.serverTimestamp(),
     updatedDate: admin.firestore.FieldValue.serverTimestamp(),
+    isTest,
+    tag,
   }
 
   for (let i = 0; i < quantity; i++) {
@@ -36,6 +43,7 @@ const generateSerialnumber = () => {
       newSerialnumber = zeroPadding(Math.floor(Math.random() * max), digit)
     } while (existingSerialnumbers.includes(newSerialnumber))
     existingSerialnumbers.push(newSerialnumber)
+    generatedSerialnumbers.push(newSerialnumber)
     batch.set(serialnumberRef.doc(newSerialnumber), values)
 
     // 500件ごとにコミット
@@ -45,6 +53,7 @@ const generateSerialnumber = () => {
     }
   }
   commit()
+  return generatedSerialnumbers
 }
 
 const commit = () => {
@@ -62,6 +71,24 @@ const zeroPadding = (num, len) => {
   return (Array(len).join('0') + num).slice(-len)
 }
 
+const formatDate = date => {
+  const y = date.getFullYear()
+  const m = (date.getMonth() + 1).toString().padStart(2, '0')
+  const d = date
+    .getDate()
+    .toString()
+    .padStart(2, '0')
+  const h = date
+    .getHours()
+    .toString()
+    .padStart(2, '0')
+  const min = date
+    .getMinutes()
+    .toString()
+    .padStart(2, '0')
+  return y + '-' + m + '-' + d + '-' + h + '-' + min
+}
+
 // ========================================
 
 const serialnumberRef = db.collection('serialnumber')
@@ -74,5 +101,14 @@ serialnumberRef.get().then(snapshot => {
     existingSerialnumbers.push(doc.id)
   })
   console.log('existing serialnumbers size:  ', snapshot.size)
-  generateSerialnumber()
+  const generatedSerialnumbers = generateSerialnumber()
+  const file = fs.createWriteStream(`serialnumber_${formatDate(new Date())}.csv`)
+  file.write(`Serialnumber,#URL\n`)
+  generatedSerialnumbers.forEach(sn => {
+    console.log(sn.toString().substring(0, 4) + ' ' + sn.toString().substring(4))
+    file.write(
+      `${sn.toString().substring(0, 4)} ${sn.toString().substring(4)},${baseUrl}${sn.toString()}\n`
+    )
+  })
+  file.end()
 })

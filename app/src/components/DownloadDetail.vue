@@ -23,18 +23,54 @@
           style="marginBottom: 24px"
         ></v-progress-linear>
 
+        <p v-if="speciallyItem.length > 0">
+          容量の大きいファイルは自動的にダウンロードできません。
+          以下から別途ダウンロードいただけます。
+          <v-row>
+            <v-col v-for="item in speciallyItem" :key="item.url" cols="12" sm="6">
+              <a
+                :href="item.url"
+                class="text-decoration-none"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <v-card class="mx-auto" outlined>
+                  <v-list-item two-line>
+                    <v-list-item-avatar tile size="40">
+                      <img :src="item.artwork"
+                    /></v-list-item-avatar>
+                    <v-list-item-content>
+                      <!-- <div class="overline mb-4">OVERLINE</div> -->
+                      <v-list-item-title class=" mb-1">{{ item.name }}</v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ (item.size / 1048576).toFixed(2) }} MB</v-list-item-subtitle
+                      >
+                    </v-list-item-content>
+
+                    <v-list-item-avatar tile size="40" style="text-decoration:none ">
+                      <v-tooltip v-model="tooltip" top>
+                        <template v-slot:activator="{ on, attrs }">
+                          <v-btn
+                            icon
+                            @click.stop.prevent="copyToClipboard(item.url)"
+                            v-bind="attrs"
+                            v-on="on"
+                          >
+                            <v-icon>mdi-content-copy</v-icon></v-btn
+                          >
+                        </template>
+                        <span>ダウンロードURLをコピー</span>
+                      </v-tooltip>
+                    </v-list-item-avatar>
+                  </v-list-item></v-card
+                ></a
+              ></v-col
+            ></v-row
+          >
+        </p>
+
         <p>
           {{ dialogText }}
-        </p>
-        <p>
-          ダウンロードが上手くいかない場合は<a
-            href="https://docs.google.com/forms/d/e/1FAIpQLScwSAHdOBM9sVOPPNfLpji79HKwOZcbJvMBgIPQOTEXO9NWhA/viewform"
-            target="newtab"
-            :style="{
-              color: $vuetify.theme.themes[$vuetify.theme.dark ? 'dark' : 'light'].secondary,
-            }"
-            >コチラ</a
-          >からお問い合わせください
         </p>
       </v-card-text>
 
@@ -44,7 +80,7 @@
         <v-spacer></v-spacer>
 
         <v-btn
-          :disabled="!isDownloadCompleated && isSerialnumberValid"
+          :disabled="!(isDownloadCompleated && isZipCompleated) && isSerialnumberValid"
           class="text-body-1 text-md-h6"
           :color="$vuetify.theme.dark ? 'accent lighten-2' : 'accent'"
           text
@@ -59,7 +95,7 @@
 
 <script>
 import { mapState } from 'vuex'
-import { firebase } from '../firebase'
+import { functions } from '../firebase'
 import axios from 'axios'
 import streamSaver from 'streamsaver'
 import { saveAs } from 'file-saver'
@@ -70,9 +106,15 @@ export default {
   data() {
     return {
       dialog: false,
+      tooltip: false,
+      tooltipMessage: 'ダウンロードURLをコピー',
       totalChunk: 0,
       loadedCunk: 0,
+      zippingProgression: 0,
       isDownloadCompleated: false,
+      isZipCompleated: false,
+      speciallyItem: [],
+      isAndroidChrome: false,
     }
   },
   methods: {
@@ -80,25 +122,33 @@ export default {
       // get download urls
       console.log('download')
       if (!this.isSerialnumberValid) return
-      const downloadFunction = firebase.functions().httpsCallable('download')
+      const downloadFunction = functions.httpsCallable('download')
       const data = await downloadFunction({
         serialnumber: this.serialnumber,
       }).catch(error => {
         console.log(error)
       })
+      console.log(data)
       const files = data.data.files
       console.log(data.data)
       // download Process
       this.totalChunk = 0
       this.loadedCunk = 0
-      if (platform.os.family == 'Android' && platform.name == 'Chrome Mobile')
-        this.downloadProcessOnAndroidChrome(files)
-      else this.downloadProcessOnOthers(files)
+
+      this.speciallyItem = files.filter(file => file.extension == 'zip')
+      // this.speciallyItem[0].url =
+      //   'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2F_%E5%8B%A4%E5%8B%99%E6%99%82%E9%96%93.zip?alt=media&token=54b18c0e-a22a-425a-9d22-fa927be3d722'
+      const fileteredFiles = files.filter(file => file.extension != 'zip')
+
+      if (this.isAndroidChrome) this.downloadProcessOnAndroidChrome(fileteredFiles)
+      else this.downloadProcessOnOthers(fileteredFiles)
     },
 
     async downloadProcessOnAndroidChrome(files) {
       // https か localhost 以外で接続すると複数ファイルダウンロードできない
       console.log('downloadProcessOnAndroidChrome')
+      console.log(files)
+      this.isZipCompleated = true
       const save = (file, index) => {
         return new Promise((resolve, reject) => {
           fetch(file.url).then(res => {
@@ -115,7 +165,9 @@ export default {
               },
             })
 
-            const fileStream = streamSaver.createWriteStream(file.name)
+            const fileStream = streamSaver.createWriteStream(
+              (index + 1).toString().padStart(2, '0') + ' ' + file.name
+            )
             const readableStream = res.body
 
             if (window.WritableStream && readableStream.pipeTo) {
@@ -193,11 +245,7 @@ export default {
 
       const zip = new JSZip()
       const zipName =
-        (this.type == 'single'
-          ? this.single.name
-          : this.type == 'package'
-          ? this.pack.name
-          : null) + '.zip'
+        this.type == 'single' ? this.single.name : this.type == 'package' ? this.pack.name : null
       const folder = zip.folder(zipName)
 
       const result = await Promise.all(
@@ -206,16 +254,34 @@ export default {
           return save(file, index)
         })
       )
-      result.forEach(result => {
-        folder.file(result.file.name, result.data)
+      result.forEach((result, index) => {
+        folder.file((index + 1).toString().padStart(2, '0') + ' ' + result.file.name, result.data)
       })
 
-      const blob = await zip.generateAsync({ type: 'blob' })
-      saveAs(blob, zipName)
+      const blob = await zip.generateAsync({ type: 'blob' }, metadata => {
+        console.log('progression: ' + metadata.percent.toFixed(2) + ' %')
+        this.zippingProgression = metadata.percent
+        if (metadata.currentFile) {
+          console.log('current file = ' + metadata.currentFile)
+        }
+      })
+      this.isZipCompleated = true
+      saveAs(blob, zipName + '.zip')
     },
-  },
-  mounted() {
-    console.log(platform)
+    copyToClipboard(str) {
+      const d = document
+      const t = d.createElement('pre')
+      t.textContent = str
+      d.body.appendChild(t)
+      d.getSelection().selectAllChildren(t)
+      d.execCommand('copy')
+      d.body.removeChild(t)
+
+      this.$nextTick(() => {
+        this.tooltipMessage = 'コピーしました'
+        this.tooltip = true
+      })
+    },
   },
   computed: {
     ...mapState([
@@ -237,20 +303,26 @@ export default {
     dialogTitle: function() {
       if (!this.isSerialnumberValid) return 'ダウンロード上限に達しました'
       else if (!this.isDownloadCompleated) return 'ダウンロードしています'
+      else if (this.isDownloadCompleated && !this.isZipCompleated) return 'ファイルをまとめています'
       else return 'ダウンロード完了'
     },
     downloadedValue: function() {
-      let result
-      if (this.totalChunk == 0) result = 0
-      else result = (this.loadedCunk / this.totalChunk) * 100
+      let downloaded
+      if (this.totalChunk == 0) downloaded = 0
+      else downloaded = (this.loadedCunk / this.totalChunk) * 100
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      if (result == 100) this.isDownloadCompleated = true
+      if (downloaded == 100) this.isDownloadCompleated = true
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       else this.isDownloadCompleated = false
-      return result
+
+      if (this.isAndroidChrome) return downloaded
+      else return (downloaded + this.zippingProgression) / 2
     },
   },
-
+  mounted: function() {
+    if (platform.os.family == 'Android' && platform.name == 'Chrome Mobile')
+      this.isAndroidChrome = true
+  },
   watch: {
     dialog: function(newVal) {
       // ダウンロード完了してダイアログを閉じたときの処理
@@ -258,6 +330,7 @@ export default {
         this.$store.dispatch('decrementDownloadsRemaining')
         this.$store.dispatch('incrementDownloadCountInSession')
         this.isDownloadCompleated = false
+        this.isZipCompleated = false
       }
 
       const onBeforeunload = () => {
@@ -270,6 +343,9 @@ export default {
       } else {
         window.removeEventListener('beforeunload', onBeforeunload)
       }
+    },
+    tooltip: function(newVal) {
+      if (!newVal) this.tooltipMessage = 'ダウンロードURLをコピー'
     },
   },
 }
