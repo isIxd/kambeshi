@@ -11,21 +11,21 @@ const db = admin.firestore()
 
 // ---------- SETTING ----------
 const name = [
-  'May Be Blues',
-  'whisper',
-  'ほほえみ',
-  'テジナ',
-  '迷いの風',
-  '黄色線',
-  'ENDLESS',
-  '声',
-  'そういうことなのさ',
-  '足を止めるから',
+  'AWESOME SINGLE A',
+  'AWESOME SINGLE B',
+  'AWESOME SINGLE C',
+  'AWESOME SINGLE D',
+  'AWESOME SINGLE E',
+  'AWESOME SINGLE F',
+  'AWESOME SINGLE G',
+  'AWESOME SINGLE H',
+  'AWESOME SINGLE I',
+  'AWESOME SINGLE J',
 ]
-const artist = 'shunhiro'
+const artist = 'Awesome Artist'
 const artwork =
-  'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2Fpackage%2Fopen%20your%20path%2Fopen%20your%20path_artwork.png?alt=media&token=2aed185f-2954-4b0c-b192-aabcafdda433'
-const data = 'private/package/open your path/'
+  'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2Fpackage%2Ftest%2FAWESOME_SINGLE.jpg?alt=media&token=2d5a1c17-1196-4c64-9b8e-8c11ccff5d8a'
+const data = 'private/package/test/'
 const releaseDate = new Date('2020/09/06')
 // ---------- SETTING ----------
 const publicRef = db.collection('single/info/public')

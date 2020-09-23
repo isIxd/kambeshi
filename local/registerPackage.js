@@ -10,21 +10,21 @@ admin.initializeApp({
 const db = admin.firestore()
 
 // ---------- SETTING ----------
-const name = 'open your path'
-const artist = 'shunhiro'
+const name = 'AWESOME ALBUM'
+const artist = 'Awesome Artist'
 const artwork =
-  'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2Fpackage%2Fopen%20your%20path%2Fopen%20your%20path_artwork.png?alt=media&token=2aed185f-2954-4b0c-b192-aabcafdda433'
+  'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2Fpackage%2Ftest%2FAWESOME_ALBUM.jpg?alt=media&token=fe83c4a9-5540-4fc7-8dff-12b79a6dc8cc'
 const contents = [
-  'fIFkIUprIXbWTUhyKQx6',
-  'YajSRrONYNEIyZTVxk2j',
-  'aAx8lfmZx6EelHxjGWNR',
-  'Ch3ucBxQo1WYi0HQKhZE',
-  'wMooyqTm9MJmfR2jU8vz',
-  'OJdVoxNUDuMMwF8MavkJ',
-  'ydKhriqo9H7l2qpmUuUC',
-  'lI9saEm0N9eYIFDXs80c',
-  'GHKym3GBkfsFqhMuLdGZ',
-  'wvI5AtU673F3Hnqnl2pk',
+  'vLfQABxIOwGyO80b3Tts',
+  'mFBEmyDLKwGg1vDrBUf6',
+  'brDzXqYsSzb2Y4GnPwni',
+  't1bP78DvVJ03XklAQSsK',
+  'IqylBTDVwW5o9yZ48xL1',
+  'CTlQ6n9NnHv3tcF1GO5A',
+  '5tPkOf6NMvA2JriiVW6d',
+  'CWMGoQKyMDMY72k9iMzn',
+  'ZoypCzRji8pM26Xnsiia',
+  'qUUKm61nCUw59IsJy00I',
 ]
 const releaseDate = new Date('2020/09/06')
 // ---------- SETTING ----------

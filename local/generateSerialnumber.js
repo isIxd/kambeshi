@@ -16,9 +16,9 @@ const digit = 8 //シリアルナンバーのケタ数
 const type = 'package' //'single' or 'package'
 const downloadsCount = 0 //0 ダウンロード数
 const downloadsRemaining = 3 //ダウンロード可能回数
-const contents = db.doc('/package/zxoordHHXZmYUKpbM6YF') //'single' か 'package'のRef
+const contents = db.doc('/package/X3SRpZjj6XCxl46zDay0') //'single' か 'package'のRef
 const isTest = true // テスト用のシリアルナンバーかどうか
-const tag = 'temp' // 任意のタグ
+const tag = 'demo' // 任意のタグ
 // ---------- SETTING ----------
 const baseUrl = 'https://download.shunhiro.com/serialnumber/'
 
