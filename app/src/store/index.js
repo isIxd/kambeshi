@@ -62,8 +62,14 @@ export default new Vuex.Store({
             resolve({ serialnumberExists: true })
           })
           .catch(err => {
-            console.error(err)
-            resolve({ serialnumberExists: false })
+            console.log(err.code, err.message)
+            if (err.code == 'resource-exhausted') {
+              resolve({ isResourceExhausted: true })
+            } else if (err.code == 'permission-denied') {
+              resolve({ isPermissionDenied: true })
+            } else {
+              resolve({ serialnumberExists: false })
+            }
           })
       })
     },
