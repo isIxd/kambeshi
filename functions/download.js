@@ -81,7 +81,7 @@ module.exports = functions.region('asia-northeast1').https.onCall(async (data, c
   checkAuth(context)
   checkArgments(data)
 
-  logCalling(context.uid, 'download')
+  logCalling(context.auth.uid, 'download')
 
   const isValidCallResult = await isValidCall(context.auth.uid, 'validate')
   if (!isValidCallResult) {

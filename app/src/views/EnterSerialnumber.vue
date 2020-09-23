@@ -137,19 +137,18 @@ export default {
     },
     validate: async function() {
       this.isValidating = true
-      this.validateSerialnumber().then(response => {
-        if (Object.prototype.hasOwnProperty.call(response, 'isResourceExhausted')) {
-          this.validationResultMessage = 'しばらくしてからもう一度お試しください。'
-        } else if (Object.prototype.hasOwnProperty.call(response, 'isPermissionDenied')) {
-          this.validationResultMessage = '認証に失敗しました。再読み込みしてください。'
-        } else if (response.serialnumberExists) {
-          this.validationResultMessage = ''
-          this.$refs.btn.$el.focus()
-        } else {
-          this.validationResultMessage = '不正なシリアルナンバーです。'
-          this.$refs.input[this.$refs.input.length - 1].focus()
-        }
-      })
+      const response = await this.validateSerialnumber()
+      if (Object.prototype.hasOwnProperty.call(response, 'isResourceExhausted')) {
+        this.validationResultMessage = 'しばらくしてからもう一度お試しください。'
+      } else if (Object.prototype.hasOwnProperty.call(response, 'isPermissionDenied')) {
+        this.validationResultMessage = '認証に失敗しました。再読み込みしてください。'
+      } else if (response.serialnumberExists) {
+        this.validationResultMessage = ''
+        this.$refs.btn.$el.focus()
+      } else {
+        this.validationResultMessage = '不正なシリアルナンバーです。'
+        this.$refs.input[this.$refs.input.length - 1].focus()
+      }
       this.isValidating = false
     },
     setIntaractiveSerialnumber: function(newSerialnumber) {
