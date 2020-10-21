@@ -128,16 +128,10 @@ export default {
       }).catch(error => {
         console.log(error)
       })
-      console.log(data)
       const files = data.data.files
-      console.log(data.data)
-      // download Process
-      this.totalChunk = 0
-      this.loadedCunk = 0
 
+      // download Process
       this.speciallyItem = files.filter(file => file.extension == 'zip')
-      // this.speciallyItem[0].url =
-      //   'https://firebasestorage.googleapis.com/v0/b/kambeshi-c8022.appspot.com/o/public%2F_%E5%8B%A4%E5%8B%99%E6%99%82%E9%96%93.zip?alt=media&token=54b18c0e-a22a-425a-9d22-fa927be3d722'
       const fileteredFiles = files.filter(file => file.extension != 'zip')
 
       if (this.isAndroidChrome) this.downloadProcessOnAndroidChrome(fileteredFiles)
@@ -157,11 +151,11 @@ export default {
               transform: (chunk, controller) => {
                 this.loadedCunk += chunk.length
                 controller.enqueue(chunk)
-                console.log(
-                  `${index}  received: ${this.loadedCunk}(${Math.round(
-                    (this.loadedCunk / this.totalChunk) * 100
-                  )} %)    ${this.totalChunk}`
-                )
+                // console.log(
+                //   `${index}  received: ${this.loadedCunk}(${Math.round(
+                //     (this.loadedCunk / this.totalChunk) * 100
+                //   )} %)    ${this.totalChunk}`
+                // )
               },
             })
 
@@ -214,11 +208,11 @@ export default {
               const currentLoaded = progressEvent.loaded - preLoaded
               preLoaded += currentLoaded
               this.loadedCunk += currentLoaded
-              console.log(
-                `received(${index}):  ${this.loadedCunk}(${Math.round(
-                  (this.loadedCunk / this.totalChunk) * 100
-                )} %)    ${this.totalChunk}`
-              )
+              // console.log(
+              //   `received(${index}):  ${this.loadedCunk}(${Math.round(
+              //     (this.loadedCunk / this.totalChunk) * 100
+              //   )} %)    ${this.totalChunk}`
+              // )
             },
           })
             .then(response => {
@@ -259,11 +253,11 @@ export default {
       })
 
       const blob = await zip.generateAsync({ type: 'blob' }, metadata => {
-        console.log('progression: ' + metadata.percent.toFixed(2) + ' %')
+        // console.log('progression: ' + metadata.percent.toFixed(2) + ' %')
         this.zippingProgression = metadata.percent
-        if (metadata.currentFile) {
-          console.log('current file = ' + metadata.currentFile)
-        }
+        // if (metadata.currentFile) {
+        //   console.log('current file = ' + metadata.currentFile)
+        // }
       })
       this.isZipCompleated = true
       saveAs(blob, zipName + '.zip')
@@ -331,6 +325,9 @@ export default {
         this.$store.dispatch('incrementDownloadCountInSession')
         this.isDownloadCompleated = false
         this.isZipCompleated = false
+        this.zippingProgression = 0
+        this.totalChunk = 0
+        this.loadedCunk = 0
       }
 
       const onBeforeunload = () => {

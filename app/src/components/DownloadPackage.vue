@@ -339,5 +339,5 @@ export default {
     bottom: -76px
   overflow: hidden
 .v-data-table
-  background-color: inherit
+  background-color: inherit !important
 </style>

@@ -17,6 +17,11 @@ firebase
     console.log(error)
   })
 
+firebase.auth().onAuthStateChanged(u => {
+  user = u
+})
+
+let user
 const db = firebase.firestore()
 const functions = firebase.app().functions('asia-northeast1')
 
@@ -84,4 +89,4 @@ const getSingleData = async singleRef => {
   }
 }
 
-export { functions, db, validateSerialnumber, getPackageData, getSingleData }
+export { user, functions, db, validateSerialnumber, getPackageData, getSingleData }

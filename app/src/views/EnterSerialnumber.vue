@@ -59,6 +59,7 @@
 <script>
 import { mapActions } from 'vuex'
 import { mapState } from 'vuex'
+import { user } from '../firebase/index'
 import favicon from '@/assets/favicon.svg'
 
 export default {
@@ -137,6 +138,7 @@ export default {
     },
     validate: async function() {
       this.isValidating = true
+      this.validationResultMessage = 'シリアルナンバーを確認しています。'
       const response = await this.validateSerialnumber()
       if (Object.prototype.hasOwnProperty.call(response, 'isResourceExhausted')) {
         this.validationResultMessage = 'しばらくしてからもう一度お試しください。'
@@ -179,7 +181,16 @@ export default {
             return acc + this.fullWidth2halfWidth(digit)
           }, '')
       )
-      this.validate()
+      if (user) this.validate()
+      else {
+        const validateLater = () => {
+          setTimeout(() => {
+            if (user) this.validate()
+            else validateLater()
+          }, 50)
+        }
+        validateLater()
+      }
     }
 
     // 前のページから戻ったときの処理

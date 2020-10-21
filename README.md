@@ -83,7 +83,7 @@ An application that allows you to download content by entering a serial number
 
 * API 制限設定を Cloud Firestore に登録
 
-  - `api/settings/type/download`と `api/settings/type/download`にそれぞれ以下を設定
+  - `api/settings/type/download`と `api/settings/type/validate`にそれぞれ以下を設定
     ```
     {
       count: Number | 単位時間あたりの呼び出し可能回数
