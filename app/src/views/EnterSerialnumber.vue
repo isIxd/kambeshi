@@ -34,10 +34,13 @@
           class="text-caption text-sm-subtitle-1 validation-result-message"
           :style="{
             transform: `translateX(-50%) translateY(-${$vuetify.breakpoint.xs ? 250 : 180}%)`,
-            color: $vuetify.theme.themes[$vuetify.theme.dark ? 'dark' : 'light'].error,
+            color:
+              $vuetify.theme.themes[$vuetify.theme.dark ? 'dark' : 'light'][
+                validationMessage.color
+              ],
           }"
         >
-          {{ validationResultMessage }}
+          {{ validationMessage.text }}
         </p>
         <v-btn
           color="accent"
@@ -87,7 +90,7 @@ export default {
       { order: 7, value: '' },
     ],
     isValidating: false,
-    validationResultMessage: '',
+    validationMessage: { text: '', color: 'info' },
   }),
   methods: {
     ...mapActions(['setSerialnumber', 'validateSerialnumber']),
@@ -107,7 +110,7 @@ export default {
       })
     },
     checkInput: function(index) {
-      this.validationResultMessage = ''
+      this.validationMessage.text = ''
       // 全角数字を半角数字に
       // 2ケタ以上の場合は最後の数値
       let target = this.fullWidth2halfWidth(this.intaractiveSerialnumber[index].value.toString())
@@ -138,17 +141,17 @@ export default {
     },
     validate: async function() {
       this.isValidating = true
-      this.validationResultMessage = 'シリアルナンバーを確認しています。'
+      this.setValidationMessage('シリアルナンバーを確認しています。', 'info')
       const response = await this.validateSerialnumber()
       if (Object.prototype.hasOwnProperty.call(response, 'isResourceExhausted')) {
-        this.validationResultMessage = 'しばらくしてからもう一度お試しください。'
+        this.setValidationMessage('しばらくしてからもう一度お試しください。', 'error')
       } else if (Object.prototype.hasOwnProperty.call(response, 'isPermissionDenied')) {
-        this.validationResultMessage = '認証に失敗しました。再読み込みしてください。'
+        this.setValidationMessage('認証に失敗しました。再読み込みしてください。', 'error')
       } else if (response.serialnumberExists) {
-        this.validationResultMessage = ''
+        this.setValidationMessage('', 'info')
         this.$refs.btn.$el.focus()
       } else {
-        this.validationResultMessage = '不正なシリアルナンバーです。'
+        this.setValidationMessage('不正なシリアルナンバーです。', 'error')
         this.$refs.input[this.$refs.input.length - 1].focus()
       }
       this.isValidating = false
@@ -160,6 +163,10 @@ export default {
         .forEach((digit, index) => {
           this.$set(this.intaractiveSerialnumber[index], 'value', digit)
         })
+    },
+    setValidationMessage: function(text, color) {
+      this.$set(this.validationMessage, 'text', text)
+      this.$set(this.validationMessage, 'color', color)
     },
   },
   computed: {
